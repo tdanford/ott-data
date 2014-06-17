@@ -1,0 +1,20 @@
+uid	|	parent_uid	|	name	|	rank	|	sourceinfo	|	uniqname	|	flags	|	
+805080	|		|	life	|	no rank	|	silva:0,ncbi:1,gbif:0,irmng:0	|		|	edited	|	
+4807313	|	805080	|	Viruses	|	superkingdom	|	ncbi:10239,gbif:8,irmng:19	|		|	hidden,sibling_lower	|	
+4917536	|	4807313	|	unclassified viruses	|	no rank - terminal	|	ncbi:12429	|		|	not_otu,viral,hidden	|	
+4810608	|	4807313	|	Retro-transcribing viruses	|	no rank	|	ncbi:35268	|		|	viral,hidden	|	
+4807320	|	4810608	|	Metaviridae	|	family	|	ncbi:186665,gbif:6213,irmng:106875	|		|	viral,hidden	|	
+4813143	|	4807320	|	Metavirus	|	genus	|	ncbi:186667,irmng:1383644	|		|	viral,hidden,barren	|	
+4813146	|	4807320	|	Errantivirus	|	genus	|	ncbi:186666,irmng:1065037	|		|	viral,hidden	|	
+4813147	|	4813146	|	Drosophila melanogaster Zam virus	|	species	|	ncbi:348584	|		|	viral,hidden	|	
+4813148	|	4813146	|	Drosophila melanogaster Idefix virus	|	species	|	ncbi:348585	|		|	viral,hidden	|	
+4813144	|	4807320	|	unclassified Metaviridae	|	no rank - terminal	|	ncbi:1232498	|		|	not_otu,viral,hidden	|	
+5268888	|	4807320	|	Semotivirus	|	genus	|	irmng:1045417	|		|	viral,hidden,barren	|	
+4813145	|	4807320	|	Ananas metavirus pC17Dea2	|	species	|	ncbi:544576	|		|	viral,unclassified,hidden	|	
+4807343	|	4810608	|	Caulimoviridae	|	family	|	ncbi:186534,gbif:1924,irmng:113721	|		|	viral,hidden	|	
+4810883	|	4807343	|	Soymovirus	|	genus	|	ncbi:187214,irmng:1030012	|		|	viral,hidden	|	
+4810889	|	4810883	|	Peanut chlorotic streak virus	|	species	|	ncbi:35593	|		|	viral,hidden	|	
+4810886	|	4810883	|	Soybean chlorotic mottle virus	|	species	|	ncbi:10651	|		|	viral,hidden	|	
+4810888	|	4810883	|	Cestrum yellow leaf curling virus	|	species	|	ncbi:175814	|		|	viral,hidden	|	
+4810887	|	4810883	|	Blueberry red ringspot virus	|	species	|	ncbi:172220	|		|	viral,hidden	|	
+4810884	|	4810883	|	unclassified Soymovirus	|	no rank - terminal	|	ncbi:418399	|		|	not_otu,viral,hidden	|	
