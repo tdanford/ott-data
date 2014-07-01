@@ -25,18 +25,22 @@ object OTTContext {
   implicit def contextToOTTContext( sc : SparkContext ) : OTTContext = new OTTContext(sc)
 }
 
-class OTTContext( sc : SparkContext ) extends Serializable with Logging {
+class OTTContext( @transient sc : SparkContext ) extends Serializable with Logging {
 
   def loadTaxonomyFile( path : String ) : RDD[TaxonomyLine] = {
     val conf = sc.hadoopConfiguration
-    //val job = new Job(conf)
     val records : RDD[(LongWritable, Text)] =
       sc.newAPIHadoopFile[LongWritable, Text, TextInputFormat](path,
         classOf[TextInputFormat],
         classOf[LongWritable],
         classOf[Text], conf)
 
-    val tax : RDD[TaxonomyLine] = records.map(_._2.toString).map(OTTTaxonomyLoader.parseLine)
-    tax
+    def isDataLine( pair : (LongWritable, Text) ) : Boolean =
+      pair match {
+        case (lw : LongWritable, t : Text) =>
+          lw.get() != 0 && t.getLength > 0
+      }
+
+    records.filter(isDataLine).map(_._2.toString).map(OTTTaxonomyLoader.parseLine)
   }
 }
