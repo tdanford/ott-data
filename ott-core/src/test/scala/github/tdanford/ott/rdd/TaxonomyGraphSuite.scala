@@ -27,4 +27,27 @@ class TaxonomyGraphSuite extends SparkFunSuite {
     assert(g.numVertices === 19)
     assert(g.numEdges === 18)
   }
+
+  sparkTest("can measure simple parent/child distance in the graph") {
+    val p : String = path("test-taxonomy.tsv")
+    val lines = sc.loadTaxonomyFile(p)
+    val g = TaxonomyGraph.asGraph(lines)
+    val dist = TaxonomyGraph.findDistance(g, "4917536", "805080")
+    assert(dist === 2)
+  }
+
+  sparkTest("can find the path between a parent/child in the graph") {
+    val p : String = path("test-taxonomy.tsv")
+    val lines = sc.loadTaxonomyFile(p)
+    val g = TaxonomyGraph.asGraph(lines)
+    val gp = TaxonomyGraph.findPath(g, "4917536", "805080")
+    assert(gp.length() === 2)
+    assert(gp.firstNode === 805080)
+    assert(gp.lastNode === 4917536)
+  }
+
+  // Homo sapiens is 770315
+  // Homo sapiens sapiens is 3607676
+  // Root is 805030
+  // Mus musculus is 542509
 }

@@ -24,9 +24,20 @@ object OTTTaxonomyLoader {
     "uid\t|\tparent_uid\t|\tname\t|\trank\t|\tsourceinfo\t|\tuniqname\t|\tflags\t|\t".split("\t\\|\t")
 
   def parseLine( headerFields : Array[String], line : String ) : TaxonomyLine = {
-    val map = headerFields.zip(line.split("\t\\|\t")).toMap
-    TaxonomyLine(map("uid"), map("parent_uid"), map("name"),
-      map("rank"), map("sourceinfo").split(","), map("uniqname"), map("flags").split(","))
+    try {
+      val splitted = line.split("\t\\|\t", -1)
+      if(splitted.length != headerFields.length+1) {
+        throw new IllegalArgumentException("Line \"%s\" doesn't appear to have the right number of fields (%d), shown here: %s".format( line.replaceAll("\t", "\\\\t"), headerFields.length, splitted.toList ))
+      }
+      val map = headerFields.zip(splitted).toMap
+
+      TaxonomyLine(map("uid"), map("parent_uid"), map("name"),
+        map("rank"), map("sourceinfo").split(","), map("uniqname"), map("flags").split(","))
+    } catch {
+      case e : NoSuchElementException =>
+        throw new IllegalArgumentException(
+          "Parsing of line \"%s\" failed with error \"%s\"".format(line.replaceAll("\t", "\\\\t"), e.getMessage), e)
+    }
   }
 
   def parseLine( line : String ) : TaxonomyLine = parseLine(defaultHeaderFields, line)
@@ -63,4 +74,8 @@ case class TaxonomyLine(uid : String,
                         rank : String,
                         sourceinfo : Array[String],
                         uniqname : String,
-                        flags : Array[String]) {}
+                        flags : Array[String]) {
+  override def toString : String = {
+    "uid:%s parent_uid:%s name:%s".format(uid, parent_uid, uniqname)
+  }
+}

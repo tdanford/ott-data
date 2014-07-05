@@ -16,6 +16,8 @@
 package github.tdanford.ott
 
 import github.tdanford.ott.rdd.OTTContext._
+import github.tdanford.ott.rdd.TaxonomyGraph
+import org.apache.spark.graphx.VertexId
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.scheduler.StatsReportListener
 import org.apache.hadoop.fs.Path
@@ -26,12 +28,40 @@ object Main extends App {
 
     val sc = createSparkContext("main", "local[8]")
     val lines = sc.loadTaxonomyFile(args(0))
+    val graph = TaxonomyGraph.asGraph(lines)
 
-    val first100 = lines.take(100)
-    first100.foreach {
-      case line : TaxonomyLine =>
-        println("%s -> %s".format(line.uid, line.uniqname))
+    val from = args(1)
+    val to = args(2)
+
+    val set = Set(from, to)
+
+    val argLines = lines.filter {
+      line => set.contains(line.name)
+    }.map(line => line.name -> line).collect().toMap
+
+    val fromLine = argLines(from)
+    println("From: %s".format(fromLine))
+    val toLine = argLines(to)
+    println("To: %s".format(toLine))
+
+    /**
+    val path = TaxonomyGraph.findPath(graph, toLine.uid, fromLine.uid)
+
+    val nodes = path.nodes()
+    val verts = graph.vertices.filter {
+      case (id: VertexId, line: TaxonomyLine) => nodes.contains(id)
+    }.map {
+      case (id : VertexId, line : TaxonomyLine) => id -> line
+    }.collect().toMap
+
+    nodes.foreach {
+      id => println(verts(id))
     }
+
+      **/
+
+    val p1 = TaxonomyGraph.findPathToRoot(graph, toLine.uid, "805080")
+    println(p1.nodes())
   }
 
   def createSparkContext(name: String,

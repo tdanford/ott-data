@@ -16,8 +16,11 @@
 package github.tdanford.ott.rdd
 
 import github.tdanford.ott.TaxonomyLine
+import org.apache.spark.graphx
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
+import scala.annotation.tailrec
+import scala.math._
 
 object TaxonomyGraph {
 
@@ -29,5 +32,118 @@ object TaxonomyGraph {
         .filter(_.parent_uid.length > 0) // ignore the root of the tree
         .map( taxLine => Edge(taxLine.uid.toLong, taxLine.parent_uid.toLong, taxLine.rank) )
     Graph(nodes, relationships)
+  }
+
+  case class Path(first : Long, rest : Option[Path] = None) {
+
+    final def firstNode : Long = first
+
+    @tailrec final def lastNode : Long = rest match {
+      case Some(p) => p.lastNode
+      case None => first
+    }
+
+    @tailrec private def innerLength(acc : Int) : Int = rest match {
+      case Some(p) => p.innerLength(acc + 1)
+      case None => acc
+    }
+
+    def length() : Int = innerLength(0)
+
+    def nodes() : Seq[Long] = {
+      rest match {
+        case Some(p) => first +: p.nodes()
+        case None => Seq(first)
+      }
+    }
+
+
+  }
+
+  def findPath( g : Graph[TaxonomyLine,String], uid1 : String, uid2 : String ) : Path = {
+
+    def minPath( p1 : Path, p2 : Path ) : Path = if(p1.length() <= p2.length()) p1 else p2
+    def minOptionPath( p1 : Option[Path], p2 : Option[Path] ) : Option[Path] =
+      (p1 ++ p2).reduceOption(minPath).headOption
+
+    val (uid1Long, uid2Long) = (uid1.toLong, uid2.toLong)
+    val initialGraph = g
+      .mapVertices( ( id : Long, line : TaxonomyLine ) => if(uid1Long == id) Some(Path(id)) else None )
+      .mapEdges(edge => 1)
+
+    val sssp = initialGraph.pregel[Option[Path]](None)(
+      (id, path : Option[Path], newPath : Option[Path]) => minOptionPath(path, newPath),
+      triplet => {
+        if (triplet.srcAttr.isDefined &&
+          triplet.srcAttr.get.length() + 1 < triplet.dstAttr.map(_.length()).getOrElse(Int.MaxValue)) {
+          Iterator((triplet.dstId, Some(Path(triplet.dstId, triplet.srcAttr))))
+        } else {
+          Iterator.empty
+        }
+      },
+      (a,b) => minOptionPath(a,b)
+    )
+
+    sssp.vertices.filter {
+      case (id : graphx.VertexId, path : Option[Path]) => id == uid2Long
+    }.collect().head._2.get
+  }
+
+  def findPathToRoot( g : Graph[TaxonomyLine,String], uid1 : String, uid2 : String ) : Path = {
+
+    def minPath( p1 : Path, p2 : Path ) : Path = if(p1.length() <= p2.length()) p1 else p2
+    def minOptionPath( p1 : Option[Path], p2 : Option[Path] ) : Option[Path] =
+      (p1 ++ p2).reduceOption(minPath).headOption
+
+    val (uid1Long, uid2Long) = (uid1.toLong, uid2.toLong)
+    val initialGraph = g
+      .mapVertices( ( id : Long, line : TaxonomyLine ) => if(uid1Long == id) Some(Path(id)) else None )
+      .mapEdges(edge => 1)
+
+    val sssp = initialGraph.pregel[Option[Path]](None, activeDirection=EdgeDirection.Out)(
+      (id, path : Option[Path], newPath : Option[Path]) => minOptionPath(path, newPath),
+      triplet => {
+        if (triplet.srcAttr.isDefined &&
+          triplet.srcAttr.get.length() + 1 < triplet.dstAttr.map(_.length()).getOrElse(Int.MaxValue)) {
+          Iterator((triplet.dstId, Some(Path(triplet.dstId, triplet.srcAttr))))
+        } else {
+          Iterator.empty
+        }
+      },
+      (a,b) => minOptionPath(a,b)
+    )
+
+    sssp.vertices.filter {
+      case (id : graphx.VertexId, path : Option[Path]) => id == uid2Long
+    }.collect().head._2.get
+  }
+
+  def findDistance( g : Graph[TaxonomyLine,String], uid1 : String, uid2 : String ) : Int = {
+    val (uid1Long, uid2Long) = (uid1.toLong, uid2.toLong)
+    val initialGraph = g
+      .mapVertices( (id : Long, line : TaxonomyLine) => if(uid1Long == id) 0 else Int.MaxValue )
+      .mapEdges(edge => 1)
+
+    val sssp = initialGraph.pregel(Int.MaxValue)(
+      (id, dist : Int, newDist : Int) => min(dist, newDist),
+      triplet => {
+        // Had to modify the GraphX SSSP example wih the clause
+        // ... triplet.srcAttr != Int.MaxValue ...
+        // otherwise I was getting overflow answers when MaxValue + [some Number]
+        // looped around and became negative :-(
+        // Intuitively, if triplet.srcAttr == Int.MaxValue, then the src node is unreachable
+        // and we shouldn't be sending any messages to the target node anyway.
+        if (triplet.srcAttr != Int.MaxValue && triplet.srcAttr + triplet.attr < triplet.dstAttr) {
+          Iterator((triplet.dstId, triplet.srcAttr + triplet.attr))
+        } else {
+          Iterator.empty
+        }
+      },
+      (a,b) => math.min(a,b)
+    )
+
+    sssp.vertices.filter {
+      case (id : graphx.VertexId, dist : Int) => id == uid2Long
+    }.collect().head._2
   }
 }
