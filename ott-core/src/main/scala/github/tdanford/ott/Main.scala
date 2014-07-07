@@ -26,7 +26,10 @@ object Main extends App {
 
   override def main( args : Array[String] ) {
 
-    val sc = createSparkContext("main", "local[8]")
+    val metricsConf = Option(System.getProperty("metrics"))
+    metricsConf.foreach( loc => println("Metrics Location: %s".format(loc) ))
+
+    val sc = createSparkContext("main", "local[8]", sparkMetricsConf = metricsConf)
     val lines = sc.loadTaxonomyFile(args(0))
     val graph = TaxonomyGraph.asGraph(lines)
 
