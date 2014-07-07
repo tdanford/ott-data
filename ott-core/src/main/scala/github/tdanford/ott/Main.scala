@@ -29,7 +29,7 @@ object Main extends App {
     val metricsConf = Option(System.getProperty("metrics"))
     metricsConf.foreach( loc => println("Metrics Location: %s".format(loc) ))
 
-    val sc = createSparkContext("main", "local[8]", sparkMetricsConf = metricsConf)
+    val sc = createSparkContext("main", "local[4]", sparkMetricsConf = metricsConf)
     val lines = sc.loadTaxonomyFile(args(0))
     val graph = TaxonomyGraph.asGraph(lines)
 
