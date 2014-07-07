@@ -24,13 +24,15 @@ import scala.math._
 
 object TaxonomyGraph {
 
-  def asGraph( taxons : RDD[TaxonomyLine] ) : Graph[TaxonomyLine,String] = {
+  def asGraph( taxons : RDD[TaxonomyLine] ) : Graph[TaxonomyLine,Int] = {
     val nodes : RDD[(VertexId,TaxonomyLine)] =
       taxons.map( taxLine => (taxLine.uid.toLong, taxLine) )
-    val relationships : RDD[Edge[String]] =
+    val relationships : RDD[Edge[Int]] =
       taxons
         .filter(_.parent_uid.length > 0) // ignore the root of the tree
-        .map( taxLine => Edge(taxLine.uid.toLong, taxLine.parent_uid.toLong, taxLine.rank) )
+        .flatMap( taxLine => Seq(
+        Edge(taxLine.uid.toLong, taxLine.parent_uid.toLong, -1),
+        Edge(taxLine.parent_uid.toLong, taxLine.uid.toLong, 1) ))
     Graph(nodes, relationships)
   }
 
@@ -60,7 +62,7 @@ object TaxonomyGraph {
 
   }
 
-  def findPath( g : Graph[TaxonomyLine,String], uid1 : String, uid2 : String ) : Path = {
+  def findPath( g : Graph[TaxonomyLine,Int], uid1 : String, uid2 : String ) : Path = {
 
     def minPath( p1 : Path, p2 : Path ) : Path = if(p1.length() <= p2.length()) p1 else p2
     def minOptionPath( p1 : Option[Path], p2 : Option[Path] ) : Option[Path] =
@@ -89,7 +91,7 @@ object TaxonomyGraph {
     }.collect().head._2.get
   }
 
-  def findPathToRoot( g : Graph[TaxonomyLine,String], uid1 : String, uid2 : String ) : Path = {
+  def findPathToRoot( g : Graph[TaxonomyLine,Int], uid1 : String, uid2 : String ) : Path = {
 
     def minPath( p1 : Path, p2 : Path ) : Path = if(p1.length() <= p2.length()) p1 else p2
     def minOptionPath( p1 : Option[Path], p2 : Option[Path] ) : Option[Path] =
@@ -118,7 +120,7 @@ object TaxonomyGraph {
     }.collect().head._2.get
   }
 
-  def findDistance( g : Graph[TaxonomyLine,String], uid1 : String, uid2 : String ) : Int = {
+  def findDistance( g : Graph[TaxonomyLine,Int], uid1 : String, uid2 : String ) : Int = {
     val (uid1Long, uid2Long) = (uid1.toLong, uid2.toLong)
     val initialGraph = g
       .mapVertices( (id : Long, line : TaxonomyLine) => if(uid1Long == id) 0 else Int.MaxValue )
