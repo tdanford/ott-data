@@ -47,7 +47,6 @@ object Main extends App {
     val toLine = argLines(to)
     println("To: %s".format(toLine))
 
-    /**
     val path = TaxonomyGraph.findPath(graph, toLine.uid, fromLine.uid)
 
     val nodes = path.nodes()
@@ -60,11 +59,6 @@ object Main extends App {
     nodes.foreach {
       id => println(verts(id))
     }
-
-      **/
-
-    val p1 = TaxonomyGraph.findPathToRoot(graph, toLine.uid, "805080")
-    println(p1.nodes())
   }
 
   def createSparkContext(name: String,
