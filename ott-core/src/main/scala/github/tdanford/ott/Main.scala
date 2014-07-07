@@ -74,7 +74,12 @@ object Main extends App {
                          loadSystemValues: Boolean = true,
                          sparkDriverPort: Option[Int] = None): SparkContext = {
 
-    val config: SparkConf = new SparkConf(loadSystemValues).setAppName("ott: " + name).setMaster(master)
+    SparkLogUtil.silenceSpark()
+
+    val config: SparkConf = new SparkConf(loadSystemValues)
+      .setAppName("ott: " + name)
+      .setMaster(master)
+
     if (sparkHome != null)
       config.setSparkHome(sparkHome)
     if (sparkJars != Nil)

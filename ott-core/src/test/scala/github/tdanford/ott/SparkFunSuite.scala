@@ -31,6 +31,8 @@ trait SparkFunSuite extends FunSuite with BeforeAndAfter {
 
   def setupSparkContext(sparkName: String, silenceSpark: Boolean = true) {
     synchronized {
+      if(silenceSpark) SparkLogUtil.silenceSpark()
+
       // Find an unused port
       val s = new ServerSocket(0)
       val driverPort = Some(s.getLocalPort)
