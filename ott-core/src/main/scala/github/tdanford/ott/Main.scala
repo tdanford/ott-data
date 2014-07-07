@@ -72,15 +72,23 @@ object Main extends App {
                          sparkAddStatsListener: Boolean = false,
                          sparkKryoBufferSize: Int = 4,
                          loadSystemValues: Boolean = true,
-                         sparkDriverPort: Option[Int] = None): SparkContext = {
+                         sparkDriverPort: Option[Int] = None,
+                         sparkMetricsConf: Option[String] = None): SparkContext = {
 
-    val config: SparkConf = new SparkConf(loadSystemValues).setAppName("ott: " + name).setMaster(master)
+    val config: SparkConf = new SparkConf(loadSystemValues)
+      .setAppName("ott: " + name)
+      .setMaster(master)
+
     if (sparkHome != null)
       config.setSparkHome(sparkHome)
+
     if (sparkJars != Nil)
       config.setJars(sparkJars)
+
     if (sparkEnvVars != Nil)
       config.setExecutorEnv(sparkEnvVars)
+
+    sparkMetricsConf.foreach( config.set("spark.metrics.conf", _) )
 
     // Optionally set the spark driver port
     sparkDriverPort match {
