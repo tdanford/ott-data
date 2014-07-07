@@ -86,9 +86,12 @@ object TaxonomyGraph {
       (a,b) => minOptionPath(a,b)
     )
 
-    sssp.vertices.filter {
+    val target = sssp.vertices.filter {
       case (id : graphx.VertexId, path : Option[Path]) => id == uid2Long
-    }.collect().head._2.get
+    }.collect()
+
+    if(!target.head._2.isDefined) throw new IllegalStateException("No apparent path between %s and %s".format(uid1, uid2))
+    target.head._2.get
   }
 
   def findPathToRoot( g : Graph[TaxonomyLine,Int], uid1 : String, uid2 : String ) : Path = {
